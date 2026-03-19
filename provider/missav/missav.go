@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/gocolly/colly/v2"
-	"github.com/metatube-community/metatube-sdk-go/common/fetch"
 	"golang.org/x/text/language"
 	dt "gorm.io/datatypes"
 
+	"github.com/metatube-community/metatube-sdk-go/common/fetch"
 	"github.com/metatube-community/metatube-sdk-go/common/parser"
 	"github.com/metatube-community/metatube-sdk-go/model"
 	"github.com/metatube-community/metatube-sdk-go/provider"
