@@ -68,24 +68,42 @@ func getImage(app *engine.Engine, typ imageType) gin.HandlerFunc {
 
 		// TODO: how to handle providers that implement
 		//   both actor and movie provider interfaces?
-		var isActorProvider bool
+		var (
+			isGetActorImage bool
+			err             error
+		)
 		switch {
+		case app.IsActorProvider(uri.Provider) && app.IsMovieProvider(uri.Provider):
+			isGetActorImage, err = app.IsActorId(uri.AsProviderID())
+			if err != nil {
+				abortWithError(c, err)
+				return
+			}
+			if !isGetActorImage {
+				isGetActorImage, err = app.IsMovieId(uri.AsProviderID())
+				if !isGetActorImage {
+					abortWithError(c, mt.ErrImageNotFound)
+					return
+				}
+				isGetActorImage = false
+			}
+			if err != nil {
+				abortWithError(c, err)
+				return
+			}
 		case app.IsActorProvider(uri.Provider):
-			isActorProvider = true
+			isGetActorImage = true
 		case app.IsMovieProvider(uri.Provider):
-			isActorProvider = false
+			isGetActorImage = false
 		default:
 			abortWithError(c, mt.ErrProviderNotFound)
 			return
 		}
 
-		var (
-			img image.Image
-			err error
-		)
+		var img image.Image
 		if query.URL != "" /* specified URL */ {
 			var provider mt.Provider
-			if isActorProvider {
+			if isGetActorImage {
 				provider = app.MustGetActorProviderByName(uri.Provider)
 			} else {
 				provider = app.MustGetMovieProviderByName(uri.Provider)
@@ -95,7 +113,7 @@ func getImage(app *engine.Engine, typ imageType) gin.HandlerFunc {
 				query.Ratio = ratio
 			}
 			img, err = app.GetImageByURL(provider, query.URL, query.Ratio, query.Position, query.Auto)
-		} else if isActorProvider /* actor */ {
+		} else if isGetActorImage /* actor */ {
 			switch typ {
 			case primaryImageType:
 				img, err = app.GetActorPrimaryImage(uri.AsProviderID())

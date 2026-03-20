@@ -19,7 +19,11 @@ import (
 	"github.com/metatube-community/metatube-sdk-go/provider/internal/scraper"
 )
 
-var _ provider.MovieProvider = (*MissAV)(nil)
+var (
+	_ provider.MovieProvider = (*MissAV)(nil)
+	_ provider.ActorProvider = (*MissAV)(nil)
+	_ provider.ActorSearcher = (*MissAV)(nil)
+)
 
 const (
 	Name     = "MissAV"
@@ -42,7 +46,7 @@ func New() *MissAV {
 	return &MissAV{
 		Scraper: scraper.NewDefaultScraper(
 			Name, baseURL, Priority,
-			language.Chinese,
+			language.Japanese,
 			scraper.WithUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0"),
 			scraper.WithHeaders(map[string]string{
 				"Accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -162,13 +166,11 @@ func isValidImageURL(s string) bool {
 	return len(s) > 0 && strings.Index(s, "http") == 0
 }
 
-// Deprecated: 此方法将在未来版本中删除
-func (miss *MissAV) getActorInfoByID(id string) (info *model.ActorInfo, err error) {
-	return miss.getActorInfoByURL(fmt.Sprintf(actorURL, url.QueryEscape(id)))
+func (miss *MissAV) GetActorInfoByID(id string) (info *model.ActorInfo, err error) {
+	return miss.GetActorInfoByURL(fmt.Sprintf(actorURL, url.QueryEscape(id)))
 }
 
-// Deprecated: 此方法将在未来版本中删除
-func (miss *MissAV) parseActorIDFromURL(rawURL string) (id string, err error) {
+func (miss *MissAV) ParseActorIDFromURL(rawURL string) (id string, err error) {
 	homepage, err := url.Parse(rawURL)
 	if err != nil {
 		return
@@ -179,8 +181,7 @@ func (miss *MissAV) parseActorIDFromURL(rawURL string) (id string, err error) {
 	return
 }
 
-// Deprecated: 此方法将在未来版本中删除
-func (miss *MissAV) getActorInfoByURL(rawURL string) (info *model.ActorInfo, err error) {
+func (miss *MissAV) GetActorInfoByURL(rawURL string) (info *model.ActorInfo, err error) {
 	id, err := miss.ParseActorIDFromURL(rawURL)
 	if err != nil {
 		return
@@ -228,8 +229,7 @@ func (miss *MissAV) getActorInfoByURL(rawURL string) (info *model.ActorInfo, err
 	return
 }
 
-// Deprecated: 此方法将在未来版本中删除
-func (miss *MissAV) searchActor(keyword string) (results []*model.ActorSearchResult, err error) {
+func (miss *MissAV) SearchActor(keyword string) (results []*model.ActorSearchResult, err error) {
 	c := miss.ClonedCollector()
 	c.OnXML(`//*/div[@class="max-w-full mb-6 text-nord4 rounded-lg"]/ul/li[1]/div`, func(e *colly.XMLElement) {
 		homepage := e.Request.AbsoluteURL(

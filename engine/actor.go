@@ -203,6 +203,51 @@ func (e *Engine) GetActorInfoByProviderID(pid providerid.ProviderID, lazy bool) 
 	return e.getActorInfoByProviderID(provider, pid.ID, lazy)
 }
 
+func (e *Engine) isActorId(provider mt.ActorProvider, id string) (bool, error) {
+	if id = provider.NormalizeActorID(id); id == "" {
+		return false, mt.ErrInvalidID
+	}
+	if provider.Name() == gfriends.Name {
+		return true, nil
+	}
+	var info int64
+	err := e.db. // Exact match here.
+			Table(model.ActorMetadataTableName).
+			Where("provider = ?", provider.Name()).
+			Where("id = ? COLLATE NOCASE", id).
+			Count(&info).Error
+	return info > 0, err
+}
+
+func (e *Engine) IsActorId(pid providerid.ProviderID) (bool, error) {
+	provider, err := e.GetActorProviderByName(pid.Provider)
+	if err != nil {
+		return false, err
+	}
+	return e.isActorId(provider, pid.ID)
+}
+
+func (e *Engine) isMovieId(provider mt.MovieProvider, id string) (bool, error) {
+	if id = provider.NormalizeMovieID(id); id == "" {
+		return false, mt.ErrInvalidID
+	}
+	var info int64
+	err := e.db. // Exact match here.
+			Table(model.MovieMetadataTableName).
+			Where("provider = ?", provider.Name()).
+			Where("id = ? COLLATE NOCASE", id).
+			Count(&info).Error
+	return info > 0, err
+}
+
+func (e *Engine) IsMovieId(pid providerid.ProviderID) (bool, error) {
+	provider, err := e.GetMovieProviderByName(pid.Provider)
+	if err != nil {
+		return false, err
+	}
+	return e.isMovieId(provider, pid.ID)
+}
+
 func (e *Engine) getActorInfoByProviderURL(provider mt.ActorProvider, rawURL string, lazy bool) (*model.ActorInfo, error) {
 	id, err := provider.ParseActorIDFromURL(rawURL)
 	switch {
