@@ -79,7 +79,6 @@ func (mdq *MadouQu) GetMovieInfoByURL(rawURL string) (info *model.MovieInfo, err
 		if src := e.ChildAttr(`./img`, "srcset"); src != "" {
 			tmp := ExtractImgSrc(src)
 			if strings.Contains(tmp, ",") {
-
 				info.CoverURL = tmp[0:strings.Index(tmp, ",")]
 			} else {
 				info.CoverURL = tmp
