@@ -76,8 +76,14 @@ func (mdq *MadouQu) GetMovieInfoByURL(rawURL string) (info *model.MovieInfo, err
 	c := mdq.ClonedCollector()
 
 	c.OnXML(`//article[starts-with(@id,'post')]//div[@class="container"]//p`, func(e *colly.XMLElement) {
-		if src := e.ChildAttr(`./img`, "src"); src != "" {
-			info.CoverURL = ExtractImgSrc(src)
+		if src := e.ChildAttr(`./img`, "srcset"); src != "" {
+			tmp := ExtractImgSrc(src)
+			if strings.Contains(tmp, ",") {
+
+				info.CoverURL = tmp[0:strings.Index(tmp, ",")]
+			} else {
+				info.CoverURL = tmp
+			}
 			return
 		}
 
