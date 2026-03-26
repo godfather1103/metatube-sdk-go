@@ -2,6 +2,7 @@ package madouqu
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"path"
 	"regexp"
@@ -11,6 +12,7 @@ import (
 	"github.com/gocolly/colly/v2"
 	"golang.org/x/text/language"
 
+	"github.com/metatube-community/metatube-sdk-go/common/fetch"
 	"github.com/metatube-community/metatube-sdk-go/common/number"
 	"github.com/metatube-community/metatube-sdk-go/common/parser"
 	"github.com/metatube-community/metatube-sdk-go/model"
@@ -21,6 +23,7 @@ import (
 var (
 	_ provider.MovieProvider = (*MadouQu)(nil)
 	_ provider.MovieSearcher = (*MadouQu)(nil)
+	_ provider.Fetcher       = (*MadouQu)(nil)
 )
 
 const (
@@ -35,15 +38,24 @@ const (
 )
 
 type MadouQu struct {
+	*fetch.Fetcher
 	*scraper.Scraper
 }
 
 func New() *MadouQu {
-	return &MadouQu{scraper.NewDefaultScraper(Name, baseURL, Priority, language.Chinese)}
+	return &MadouQu{
+		fetch.Default(&fetch.Config{Referer: baseURL}),
+		scraper.NewDefaultScraper(Name, baseURL, Priority, language.Chinese),
+	}
 }
 
 func (mdq *MadouQu) SetRequestTimeout(_ time.Duration) {
 	mdq.Scraper.SetRequestTimeout(10 * time.Second) // force timeout setting.
+}
+
+func (mdq *MadouQu) Fetch(rawUrl string) (*http.Response, error) {
+	u, _ := url.Parse(rawUrl)
+	return mdq.Fetcher.Fetch(u.Scheme + "://" + u.Host + u.Path + "?" + url.QueryEscape(u.RawQuery))
 }
 
 func (mdq *MadouQu) GetMovieInfoByID(id string) (info *model.MovieInfo, err error) {
